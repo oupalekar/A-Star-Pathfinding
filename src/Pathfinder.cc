@@ -1,33 +1,32 @@
 //
 // Created by Ojas Upalekar on 4/19/21.
 //
-#include "pathfinder.h"
+#include "Pathfinder.h"
 #include <cmath>
 #include <list>
 #include <iostream>
 
-
 namespace pathfinder {
 
-  pathfinder::pathfinder(size_t numOfRows, size_t numOfCols) : num_of_rows(numOfRows), num_of_cols(numOfCols) {}
+  Pathfinder::Pathfinder(size_t numOfRows, size_t numOfCols) : num_of_rows(numOfRows), num_of_cols(numOfCols) {}
 
-  bool pathfinder::isValid(const pathfinder::Node* node) const {
+  bool Pathfinder::isValid(const Pathfinder::Node* node) const {
       return node->x_ >= 0 && node->x_ <= num_of_rows && node->y_ >= 0 && node->y_ <= num_of_cols;
   }
-  bool pathfinder::isCellBlocked(const pathfinder::Node* node) const {
+  bool Pathfinder::isCellBlocked(const Pathfinder::Node* node) const {
       return isValid(node) && node->is_obstacle_;
   }
 
-  float pathfinder::CalculateHeuristic(const pathfinder::Node* a, const pathfinder::Node* b) {
+  float Pathfinder::CalculateHeuristic(const Pathfinder::Node* a, const Pathfinder::Node* b) {
       float to_return = sqrt(pow(a->x_ - b->x_,2) + pow(a->y_ - b->y_, 2));
       return to_return;
   }
   
-  float pathfinder::CalculateDistance(const pathfinder::Node* a, const pathfinder::Node* b) {
+  float Pathfinder::CalculateDistance(const Pathfinder::Node* a, const Pathfinder::Node* b) {
       return CalculateHeuristic(a,  b);
   }
 
-  void pathfinder::CreateNodes() {
+  void Pathfinder::CreateNodes() {
       //There are 10 * 10 nodes
       //Initialize Nodes
       for (size_t x = 0; x < num_of_cols; x++) {
@@ -80,7 +79,7 @@ namespace pathfinder {
       end_node_ = nodes[4 * num_of_rows / 5][num_of_rows/2]; //[8][5]
   }
 
-  void pathfinder::setObstacle(size_t x, size_t y, bool isBlocked) {
+  void Pathfinder::setObstacle(size_t x, size_t y, bool isBlocked) {
       if (!(x >= 0  && x < num_of_rows)) {
           std::cout<<x<<std::endl;
           throw std::invalid_argument("Invalid x value");
@@ -91,7 +90,7 @@ namespace pathfinder {
       nodes[x][y]->is_obstacle_ = isBlocked;
   }
 
-  void pathfinder::SolveAStar() {
+  void Pathfinder::SolveAStar() {
       //Set values to default
       for(const vector<Node*>& vecs : nodes) {
           for(Node* node : vecs) {
@@ -148,7 +147,7 @@ namespace pathfinder {
       }
   }
 
-  void pathfinder::PrintPath() {
+  void Pathfinder::PrintPath() {
       if (end_node_ != nullptr) {
           Node *node = end_node_;
           while (node->parent != nullptr) {
@@ -158,7 +157,29 @@ namespace pathfinder {
       }
   }
 
-  
+  size_t Pathfinder::getNumOfRows() const {
+      return num_of_rows;
+  }
+
+  size_t Pathfinder::getNumOfCols() const {
+      return num_of_cols;
+  }
+
+  const vector<vector<Pathfinder::Node*>>& Pathfinder::getNodes() const {
+      return nodes;
+  }
+
+  Pathfinder::Node *Pathfinder::getStartNode() const {
+      return start_node_;
+  }
+
+  Pathfinder::Node *Pathfinder::getEndNode() const {
+      return end_node_;
+  }
+
+  void Pathfinder::setDiagonals(bool diagonals) {
+      diagonals_ = diagonals;
+  }
 
 
-} //namespace pathfinder
+} //namespace Pathfinder

@@ -12,7 +12,7 @@
 namespace pathfinder {
   using std::vector;
   using std::pair;
-  class pathfinder {
+  class Pathfinder {
       
       struct Node {
           bool is_visited_ = false; //Have we visited this node
@@ -29,7 +29,7 @@ namespace pathfinder {
           }
       };
     public:
-      pathfinder(size_t numOfRows, size_t numOfCols);
+      Pathfinder(size_t numOfRows, size_t numOfCols);
 
       bool isValid(const Node* node) const;
       
@@ -43,9 +43,22 @@ namespace pathfinder {
       
       void setObstacle(size_t x, size_t y, bool isBlocked);
 
-      static float CalculateDistance(const pathfinder::Node* a, const pathfinder::Node* b);
+      static float CalculateDistance(const Pathfinder::Node* a, const Pathfinder::Node* b);
       
       void PrintPath();
+
+      size_t getNumOfRows() const;
+
+      size_t getNumOfCols() const;
+
+      const vector<vector<Node*>> &getNodes() const;
+
+      Node *getStartNode() const;
+
+      Node *getEndNode() const;
+
+      void setDiagonals(bool diagonals);
+
     private:
       size_t num_of_rows;
       size_t num_of_cols;

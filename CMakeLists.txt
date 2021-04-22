@@ -33,7 +33,7 @@ endif()
 FetchContent_Declare(
         catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v2.x
+        GIT_TAG v2.11.1
 )
 
 # Adds Catch2 testing library
@@ -49,10 +49,24 @@ get_filename_component(APP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/" ABSOLUTE)
 
 include("${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake")
 
-list(APPEND SOURCE_FILES   src/pathfinder.cc)
+list(APPEND SOURCE_FILES src/Pathfinder.cc)
 
-list(APPEND TEST_FILES )
+list(APPEND TEST_FILES tests/test_pathfinder.cc)
 
 add_executable(main apps/main.cc ${SOURCE_FILES})
+add_executable(tests tests/test_pathfinder.cc ${SOURCE_FILES} tests/test_main.cc)
 include("${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake")
 target_include_directories(main PRIVATE include)
+target_include_directories(tests PRIVATE include)
+
+ci_make_app(
+        APP_NAME        test_pathfinder
+        CINDER_PATH     ${CINDER_PATH}
+        SOURCES         tests/test_main.cc ${SOURCE_FILES} ${TEST_FILES}
+        INCLUDES        include
+        LIBRARIES       catch2
+)
+
+if(MSVC)
+    set_property(TARGET test_pathfinder APPEND_STRING PROPERTY LINK_FLAGS " /SUBSYSTEM:CONSOLE")
+endif()
