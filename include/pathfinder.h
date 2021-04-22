@@ -29,6 +29,8 @@ namespace pathfinder {
           }
       };
     public:
+      pathfinder(size_t numOfRows, size_t numOfCols);
+
       bool isValid(const Node* node) const;
       
       bool isCellBlocked(const Node* node) const;
@@ -43,13 +45,13 @@ namespace pathfinder {
 
       static float CalculateDistance(const pathfinder::Node* a, const pathfinder::Node* b);
       
+      void PrintPath();
     private:
-      
-      vector<vector<Node*>> nodes = vector<vector<Node*>>(num_of_rows, vector<Node*>(num_of_cols));
+      size_t num_of_rows;
+      size_t num_of_cols;
+      vector<vector<Node*>> nodes = vector<vector<Node*>>(10, vector<Node*>(10));
       Node* start_node_ = nullptr;
       Node* end_node_ = nullptr;
-      size_t num_of_rows = 10;
-      size_t num_of_cols = 10;
       bool diagonals_ = false;
   };
 }

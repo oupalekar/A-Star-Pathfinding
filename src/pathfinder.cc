@@ -4,10 +4,12 @@
 #include "pathfinder.h"
 #include <cmath>
 #include <list>
+#include <iostream>
 
 
 namespace pathfinder {
 
+  pathfinder::pathfinder(size_t numOfRows, size_t numOfCols) : num_of_rows(numOfRows), num_of_cols(numOfCols) {}
 
   bool pathfinder::isValid(const pathfinder::Node* node) const {
       return node->x_ >= 0 && node->x_ <= num_of_rows && node->y_ >= 0 && node->y_ <= num_of_cols;
@@ -30,6 +32,7 @@ namespace pathfinder {
       //Initialize Nodes
       for (size_t x = 0; x < num_of_cols; x++) {
           for (size_t y = 0; y < num_of_rows; y++) {
+              nodes[x][y] = new Node;
               nodes[x][y]->x_ = x;
               nodes[x][y]->y_ = y;
               nodes[x][y]->is_obstacle_ = false;
@@ -52,7 +55,7 @@ namespace pathfinder {
                   nodes[x][y]->neighbors_.push_back(nodes[x+1][y]);
               }
               if (x < num_of_cols - 1) {
-                  nodes[x][y]->neighbors_.push_back(nodes[x-1][y]);
+                  nodes[x][y]->neighbors_.push_back(nodes[x+1][y]);
               }
               
               if (diagonals_) {
@@ -78,10 +81,11 @@ namespace pathfinder {
   }
 
   void pathfinder::setObstacle(size_t x, size_t y, bool isBlocked) {
-      if (!(x > 0  && x < num_of_rows)) {
+      if (!(x >= 0  && x < num_of_rows)) {
+          std::cout<<x<<std::endl;
           throw std::invalid_argument("Invalid x value");
       }
-      if (!(y > 0 && y < num_of_rows)) {
+      if (!(y >= 0 && y < num_of_rows)) {
           throw std::invalid_argument("Invalid y value");
       }
       nodes[x][y]->is_obstacle_ = isBlocked;
@@ -89,7 +93,6 @@ namespace pathfinder {
 
   void pathfinder::SolveAStar() {
       //Set values to default
-      CreateNodes();
       for(const vector<Node*>& vecs : nodes) {
           for(Node* node : vecs) {
               node->is_visited_ = false;
@@ -109,15 +112,15 @@ namespace pathfinder {
       
       //Now we can check nodes in the list
       while (!nodes_to_test.empty() && currentNode != end_node_) {
-          //We want to check the nodes that have the smalles global goal because those are the nodes closest to the end node so we can sort it
-          nodes_to_test.sort( [](const Node& a, const Node&b) { return a.global_goal_ < b.global_goal_;});
+          //We want to check the nodes that have the smallest global goal because those are the nodes closest to the end node so we can sort it
+          nodes_to_test.sort( [](const Node* a, const Node*b) { return a->global_goal_ < b->global_goal_;});
           
           //So we think that the first value in the list is the closest, but we might have visited it so:
-          if((!nodes_to_test.empty()) && nodes_to_test.front()->is_visited_) {
+          while((!nodes_to_test.empty()) && nodes_to_test.front()->is_visited_) {
               nodes_to_test.pop_front(); //Pop out the front value because we've visited it
           }
 
-          if (!nodes_to_test.empty()) {
+          if (nodes_to_test.empty()) {
               break;
           }
           
@@ -139,14 +142,23 @@ namespace pathfinder {
                   
                   
                   //Additionally we have to update the global goal because this might be a path we want to take
-                  float possibleGlobalGoal = currentNode->global_goal_ + CalculateHeuristic(neighborNode, end_node_);
-                  if (possibleLocalGoal < neighborNode->global_goal_)  {
-                      neighborNode->global_goal_ = possibleGlobalGoal;
-                  }
+                  neighborNode->global_goal_ =  neighborNode->global_goal_ + CalculateHeuristic(neighborNode, end_node_);
               }
           }
       }
   }
+
+  void pathfinder::PrintPath() {
+      if (end_node_ != nullptr) {
+          Node *node = end_node_;
+          while (node->parent != nullptr) {
+              std::cout << "(" << node->x_ << "," << node->y_ << ")" << std::endl;
+              node = node->parent;
+          }
+      }
+  }
+
+  
 
 
 } //namespace pathfinder
