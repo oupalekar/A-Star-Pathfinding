@@ -49,15 +49,15 @@ get_filename_component(APP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/" ABSOLUTE)
 
 include("${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake")
 
-list(APPEND SOURCE_FILES src/Pathfinder.cc)
+list(APPEND SOURCE_FILES src/Pathfinder.cc
+                         src/AStarApp.cc)
+
+list(APPEND FILES SRC/Pathfinder.cc)
 
 list(APPEND TEST_FILES tests/test_pathfinder.cc)
 
-add_executable(main apps/main.cc ${SOURCE_FILES})
-add_executable(tests tests/test_pathfinder.cc ${SOURCE_FILES} tests/test_main.cc)
-include("${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake")
+add_executable(main apps/main.cc ${FILES} apps/main.cc)
 target_include_directories(main PRIVATE include)
-target_include_directories(tests PRIVATE include)
 
 ci_make_app(
         APP_NAME        test_pathfinder
@@ -67,6 +67,13 @@ ci_make_app(
         LIBRARIES       catch2
 )
 
+ci_make_app(
+        APP_NAME        cinder_pathfinder
+        CINDER_PATH     ${CINDER_PATH}
+        SOURCES         apps/cinder_pathfinder.cc ${SOURCE_FILES} 
+        INCLUDES        include
+)
+
 if(MSVC)
-    set_property(TARGET test_pathfinder APPEND_STRING PROPERTY LINK_FLAGS " /SUBSYSTEM:CONSOLE")
+    set_property(TARGET cinder_pathfinder APPEND_STRING PROPERTY LINK_FLAGS " /SUBSYSTEM:CONSOLE")
 endif()

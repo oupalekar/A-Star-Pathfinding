@@ -5,13 +5,10 @@
 #ifndef A_STAR_PATHFINDER_H
 #define A_STAR_PATHFINDER_H
 
-#include <cstdlib>
-#include <string>
 #include <vector>
 
 namespace pathfinder {
   using std::vector;
-  using std::pair;
   class Pathfinder {
       
       struct Node {
@@ -62,7 +59,7 @@ namespace pathfinder {
     private:
       size_t num_of_rows;
       size_t num_of_cols;
-      vector<vector<Node*>> nodes = vector<vector<Node*>>(10, vector<Node*>(10));
+      vector<vector<Node*>> nodes;
       Node* start_node_ = nullptr;
       Node* end_node_ = nullptr;
       bool diagonals_ = false;

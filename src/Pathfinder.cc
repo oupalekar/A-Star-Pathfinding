@@ -8,7 +8,8 @@
 
 namespace pathfinder {
 
-  Pathfinder::Pathfinder(size_t numOfRows, size_t numOfCols) : num_of_rows(numOfRows), num_of_cols(numOfCols) {}
+  Pathfinder::Pathfinder(size_t numOfRows, size_t numOfCols) :num_of_rows(numOfRows), num_of_cols(numOfCols), nodes(vector<vector<Node*>>(num_of_cols, vector<Node*>(num_of_rows))) {
+  }
 
   bool Pathfinder::isValid(const Pathfinder::Node* node) const {
       return node->x_ >= 0 && node->x_ <= num_of_rows && node->y_ >= 0 && node->y_ <= num_of_cols;
