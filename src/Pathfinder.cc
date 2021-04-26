@@ -7,7 +7,6 @@
 #include <iostream>
 
 namespace pathfinder {
-
   Pathfinder::Pathfinder(size_t numOfRows, size_t numOfCols) :num_of_rows(numOfRows), num_of_cols(numOfCols), nodes(vector<vector<Node*>>(num_of_cols, vector<Node*>(num_of_rows))) {
   }
 
@@ -76,8 +75,8 @@ namespace pathfinder {
       }
       
       //Manually setup start and end nodes
-      start_node_ = nodes[num_of_cols/5][num_of_rows/2]; //[2][5]
-      end_node_ = nodes[4 * num_of_rows / 5][num_of_rows/2]; //[8][5]
+     //start_node_ = nodes[num_of_cols/5][num_of_rows/2]; //[2][5]
+      //end_node_ = nodes[4 * num_of_rows / 5][num_of_rows/2]; //[8][5]
   }
 
   void Pathfinder::setObstacle(size_t x, size_t y, bool isBlocked) {
@@ -128,7 +127,7 @@ namespace pathfinder {
           currentNode->is_visited_ = true; // We've visited the first node!
           
           for(Node* neighborNode : currentNode->neighbors_) {
-              if(!isCellBlocked(neighborNode) && !neighborNode->is_visited_) {
+              if(!neighborNode->is_obstacle_ && !neighborNode->is_visited_) {
                   nodes_to_test.push_back(neighborNode);
               }
               
@@ -157,6 +156,20 @@ namespace pathfinder {
           }
       }
   }
+  
+  bool Pathfinder::DoesPathExist() {
+      if (end_node_ != nullptr) {
+          Node *node = end_node_;
+          while (node->parent != nullptr) {
+              node = node->parent;
+          }
+          if(node->x_ == start_node_->x_ && node->y_ == start_node_->y_) {
+              return false;
+          }
+      }
+      
+      return true;
+  }
 
   size_t Pathfinder::getNumOfRows() const {
       return num_of_rows;
@@ -180,6 +193,14 @@ namespace pathfinder {
 
   void Pathfinder::setDiagonals(bool diagonals) {
       diagonals_ = diagonals;
+  }
+
+  void Pathfinder::setStartNode(size_t x, size_t y) {
+      start_node_ = nodes[x][y];
+  }
+
+  void Pathfinder::setEndNode(size_t x, size_t y) {
+      end_node_ = nodes[x][y];
   }
 
 

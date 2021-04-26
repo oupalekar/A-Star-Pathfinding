@@ -10,7 +10,7 @@
 namespace pathfinder {
   using std::vector;
   class Pathfinder {
-      
+    public:
       struct Node {
           bool is_visited_ = false; //Have we visited this node
           bool is_obstacle_ = false; //Is the node an obstacle?
@@ -43,6 +43,8 @@ namespace pathfinder {
       static float CalculateDistance(const Pathfinder::Node* a, const Pathfinder::Node* b);
       
       void PrintPath();
+      
+      bool DoesPathExist();
 
       size_t getNumOfRows() const;
 
@@ -55,6 +57,10 @@ namespace pathfinder {
       Node *getEndNode() const;
 
       void setDiagonals(bool diagonals);
+
+      void setStartNode(size_t x, size_t y);
+
+      void setEndNode(size_t x, size_t y);
 
     private:
       size_t num_of_rows;
