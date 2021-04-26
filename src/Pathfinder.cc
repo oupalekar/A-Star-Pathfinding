@@ -196,11 +196,11 @@ namespace pathfinder {
   }
 
   void Pathfinder::setStartNode(size_t x, size_t y) {
-      start_node_ = nodes[x][y];
+      start_node_ = nodes[y][x];
   }
 
   void Pathfinder::setEndNode(size_t x, size_t y) {
-      end_node_ = nodes[x][y];
+      end_node_ = nodes[y][x];
   }
 
 
