@@ -12,15 +12,16 @@ namespace visualizer {
 
   AStarApp::AStarApp() {
       ci::app::setWindowSize(kWindowSize, kWindowSize);
-      app = Pathfinder(40, 40);
+      app = Pathfinder(20, 20);
+      app.setDiagonals(true);
       app.CreateNodes();
-      value_of_nodes_ = vector<vector<size_t>>(40, vector<size_t>(40, 0));
+      value_of_nodes_ = vector<vector<size_t>>(app.getNumOfCols(), vector<size_t>(app.getNumOfRows(), 0));
       pixel_side_length = (kWindowSize - (2 * kMargin)) / app.getNumOfCols();
   }
 
   void AStarApp::draw() {
-      for (size_t row = 0; row < 40; ++row) {
-          for (size_t col = 0; col < 40; ++col) {
+      for (size_t row = 0; row < app.getNumOfRows(); ++row) {
+          for (size_t col = 0; col < app.getNumOfCols(); ++col) {
               if (value_of_nodes_[row][col] == 1) { //Checks if the shade of the pixel is not 0
                   ci::gl::color(ci::Color::gray(0.3F));
               } else if (value_of_nodes_[row][col] == 2) {
@@ -43,13 +44,11 @@ namespace visualizer {
 
               ci::gl::color(ci::Color("blue"));
               ci::gl::drawStrokedRect(pixel_bounding_box);
-              if(value_of_nodes_[row][col] == 4) {
-                  value_of_nodes_[row][col] = 0;
-              }
           }
       }
       if (app.getStartNode() != nullptr && app.getEndNode() != nullptr) {
           app.SolveAStar();
+          RemovePath();
           Pathfinder::Node *temp = app.getEndNode();
           temp = temp->parent;
           while (temp->parent != nullptr) {
@@ -62,19 +61,28 @@ namespace visualizer {
   void AStarApp::mouseDown(ci::app::MouseEvent event) {
       if (event.isControlDown()) {
           setStartNode(event.getPos());
+          //CreatePath();
       } else if (event.isShiftDown()) {
           setEndNode(event.getPos());
+          //CreatePath();
       } else {
-          updateBoard(event.getPos());
+          if(event.isRight()) {
+              updateBoard(event.getPos(), 0);
+          }
+          updateBoard(event.getPos(), 1);
       }
   }
 
   void AStarApp::mouseDrag(ci::app::MouseEvent event) {
-      updateBoard(event.getPos());
+      if(event.isRight()) {
+          updateBoard(event.getPos(), 0);
+      } else {
+          updateBoard(event.getPos(), 1);
+      }
   }
 
-  void AStarApp::updateBoard(const vec2 &coord) {
-      double radius = .75;
+  void AStarApp::updateBoard(const vec2 &coord, size_t value) {
+      double radius = brush_radius;
       vec2 brush_sketchpad_coords =
               (coord - top_left) / (float) pixel_side_length;
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
@@ -82,9 +90,9 @@ namespace visualizer {
               vec2 pixel_center = {col + 0.5, row + 0.5};
               if (glm::distance(brush_sketchpad_coords, pixel_center) <=
                   radius) {
-                  value_of_nodes_[row][col] = 1; //If the distance between the pixels and the
+                  value_of_nodes_[row][col] = value; //If the distance between the pixels and the
                   // brush is <= the radius then sets that pixel to a shade of 1
-                  app.setObstacle(row, col, true);
+                  app.setObstacle(col, row, true);
               }
           }
       }
@@ -129,4 +137,30 @@ namespace visualizer {
           }
       }
   }
+
+  void AStarApp::CreatePath() {
+      if (app.getStartNode() != nullptr && app.getEndNode() != nullptr) {
+          RemovePath();
+          app.SolveAStar();
+          Pathfinder::Node *temp = app.getEndNode();
+          temp = temp->parent;
+          while (temp->parent != nullptr) {
+              value_of_nodes_[temp->y_][temp->x_] = 4;
+              temp = temp->parent;
+          }
+      }
+      
+  }
+
+  void AStarApp::RemovePath() {
+      for (size_t row = 0; row < app.getNumOfRows(); row++) {
+          for (size_t col = 0; col < app.getNumOfCols(); col++) {
+              if (value_of_nodes_[row][col] == 4) {
+                  value_of_nodes_[row][col] = 0;
+              }
+          }
+      }
+  }
+
+
 } //namespace visualizer;

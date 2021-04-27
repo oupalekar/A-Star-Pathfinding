@@ -22,9 +22,11 @@ namespace visualizer {
       void draw() override;
       void mouseDown(ci::app::MouseEvent event) override;
       void mouseDrag(ci::app::MouseEvent event) override;
-      void updateBoard(const vec2& coord);
+      void updateBoard(const vec2& coord, size_t value);
       void setStartNode(const vec2& coord);
       void setEndNode(const vec2& coord);
+      void CreatePath();
+      void RemovePath();
       
       const int kWindowSize = 800;
       const int kMargin = 10;
