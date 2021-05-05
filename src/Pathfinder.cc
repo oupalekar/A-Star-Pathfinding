@@ -203,11 +203,18 @@ namespace pathfinder {
   }
 
   void Pathfinder::setStartNode(size_t x, size_t y) {
-      start_node_ = &array_of_nodes_[x * num_of_cols + y];
+      if (x < 0 || y < 0) {
+          start_node_ = nullptr;
+      }
+      else{start_node_ = &array_of_nodes_[x * num_of_cols + y];}
   }
 
   void Pathfinder::setEndNode(size_t x, size_t y) {
-      end_node_ = &array_of_nodes_[x * num_of_cols + y];
+      if (x < 0 || y < 0) {
+          end_node_ = nullptr;
+      } else {
+          end_node_ = &array_of_nodes_[x * num_of_cols + y];
+      }
   }
 
   Pathfinder::Node *Pathfinder::getArrayOfNodes() const {

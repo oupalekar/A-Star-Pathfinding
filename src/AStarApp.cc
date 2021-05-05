@@ -11,7 +11,7 @@ namespace visualizer {
   using std::cout;
 
   AStarApp::AStarApp() {
-      ci::app::setWindowSize(kWindowSize, kWindowSize);
+      ci::app::setWindowSize(1.5 * kWindowSize, kWindowSize);
       app = Pathfinder(num_of_nodes_side, num_of_nodes_side);
       //app.setDiagonals(true);
       app.CreateNodes();
@@ -60,8 +60,9 @@ namespace visualizer {
       } else {
           if (event.isRight()) {
               updateBoard(event.getPos(), 0);
+          } else {
+              updateBoard(event.getPos(), 1);
           }
-          updateBoard(event.getPos(), 1);
       }
   }
 
@@ -82,6 +83,12 @@ namespace visualizer {
               vec2 pixel_center = top_length_node + vec2(pixel_side_length/2, pixel_side_length/2);
               if (glm::distance(coord, pixel_center) <=
                   radius) {
+                  if(&app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getStartNode()) {
+                      app.setStartNode(-1,-1);
+                  }
+                  if(&app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getEndNode()) {
+                      app.setEndNode(-1,-1);
+                  }
                   if (value == 1) {
                       app.setObstacle(col, row, true);
                   } else {
@@ -125,11 +132,10 @@ namespace visualizer {
   }
 
   void AStarApp::CreatePath() {
-      RemovePath();
       if (app.getStartNode() != nullptr && app.getEndNode() != nullptr) {
           app.SolveAStar();
           Pathfinder::Node *temp = app.getEndNode();
-          temp = temp->parent;
+          //temp = temp->parent;
           while (temp->parent != nullptr) {
 
               vec2 pixel_top_left = top_left + vec2(temp->x_ * pixel_side_length,
@@ -142,39 +148,9 @@ namespace visualizer {
                                     + (vec2(kMargin, 0) * vec2(temp->parent->x_, 0))
                                     + (vec2( 0, kMargin) * vec2(0, temp->parent->y_));
               vec2 parent_pixel_center = parent_pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
-              ci::gl::lineWidth(50);
-              ci::gl::color(ci::Color("yellow"));
+              ci::gl::color(ci::Color("red"));
               ci::gl::drawLine(pixel_center, parent_pixel_center);
               temp = temp->parent;
-          }
-          CheckVisited();
-      }
-  }
-
-  void AStarApp::RemovePath() {
-      for (size_t row = 0; row < app.getNumOfRows(); row++) {
-          for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              if (value_of_nodes_[row][col] == 4 || value_of_nodes_[row][col] == 5) {
-                  value_of_nodes_[row][col] = 0;
-              }
-          }
-      }
-  }
-
-  void AStarApp::CheckVisited() {
-      for (size_t row = 0; row < app.getNumOfRows(); row++) {
-          for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              if (app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getStartNode() ||
-                  app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getEndNode()) {
-                  continue;
-              }
-              if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_visited_) {
-                  if (value_of_nodes_[row][col] == 4) {
-                      continue;
-                  } else {
-                      value_of_nodes_[row][col] = 5;
-                  }
-              }
           }
       }
   }
