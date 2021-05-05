@@ -14,10 +14,10 @@ namespace pathfinder {
       struct Node {
           bool is_visited_ = false; //Have we visited this node
           bool is_obstacle_ = false; //Is the node an obstacle?
-          int x_; // X coordinate on the grid
-          int y_; // Y coordinate on the grid
-          double global_goal_; //Distance to goal
-          double local_goal_;  
+          float x_; // X coordinate on the grid
+          float y_; // Y coordinate on the grid
+          float global_goal_; //Distance to goal
+          float local_goal_;  
           vector<Node*> neighbors_; //All nodes that can be traversed to from this node
           Node* parent; //Parent node
           
@@ -56,6 +56,8 @@ namespace pathfinder {
 
       Node *getEndNode() const;
 
+      Node *getArrayOfNodes() const;
+
       void setDiagonals(bool diagonals);
 
       void setStartNode(size_t x, size_t y);
@@ -66,6 +68,7 @@ namespace pathfinder {
       size_t num_of_rows;
       size_t num_of_cols;
       vector<vector<Node*>> nodes;
+      Node* array_of_nodes_{};
       Node* start_node_ = nullptr;
       Node* end_node_ = nullptr;
       bool diagonals_ = false;

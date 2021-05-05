@@ -27,16 +27,20 @@ namespace visualizer {
       void setEndNode(const vec2& coord);
       void CreatePath();
       void RemovePath();
+      void DrawConnections();
       
       const int kWindowSize = 800;
       const int kMargin = 10;
+      const size_t num_of_nodes_side = 16;
       vec2 top_left = vec2(kMargin,kMargin);
-      int pixel_side_length;
-      double brush_radius = .5;
+      const double pixel_side_length = (kWindowSize - ((num_of_nodes_side + 1) * kMargin)) / num_of_nodes_side;
+      double radius = pixel_side_length / 2;
 
     private:
       Pathfinder app = Pathfinder(0, 0);
       vector<vector<size_t>> value_of_nodes_;
+
+      void CheckVisited();
   };
 }
 

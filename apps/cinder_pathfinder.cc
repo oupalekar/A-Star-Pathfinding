@@ -9,4 +9,4 @@ void prepareSettings(AStarApp::Settings* settings) {
 }
 
 
-CINDER_APP(AStarApp,cinder::app::RendererGl, prepareSettings);
+CINDER_APP(AStarApp,cinder::app::RendererGl, prepareSettings)

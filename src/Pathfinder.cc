@@ -18,25 +18,25 @@ namespace pathfinder {
   }
 
   float Pathfinder::CalculateHeuristic(const Pathfinder::Node* a, const Pathfinder::Node* b) {
-      float to_return = sqrt(pow(a->x_ - b->x_,2) + pow(a->y_ - b->y_, 2));
-      return to_return;
+      return CalculateDistance(a, b);
   }
   
   float Pathfinder::CalculateDistance(const Pathfinder::Node* a, const Pathfinder::Node* b) {
-      return CalculateHeuristic(a,  b);
+      float to_return = sqrtf(powf(a->x_ - b->x_,2) + powf(a->y_ - b->y_, 2));
+      return to_return;
   }
 
   void Pathfinder::CreateNodes() {
+      array_of_nodes_ = new Node[num_of_rows * num_of_cols];
       //There are 10 * 10 nodes
       //Initialize Nodes
       for (size_t x = 0; x < num_of_cols; x++) {
           for (size_t y = 0; y < num_of_rows; y++) {
-              nodes[x][y] = new Node;
-              nodes[x][y]->x_ = x;
-              nodes[x][y]->y_ = y;
-              nodes[x][y]->is_obstacle_ = false;
-              nodes[x][y]->is_visited_ = false;
-              nodes[x][y]->parent = nullptr;
+              array_of_nodes_[y * num_of_cols + x].x_ = x;
+              array_of_nodes_[y * num_of_cols + x].y_ = y;
+              array_of_nodes_[y * num_of_cols + x].is_obstacle_ = false;
+              array_of_nodes_[y * num_of_cols + x].is_visited_ = false;
+              array_of_nodes_[y * num_of_cols + x].parent = nullptr;
           }
       }
       
@@ -45,30 +45,30 @@ namespace pathfinder {
           for (size_t y = 0; y < num_of_rows; y++) {
               //We don't want the edges to have connections outside the grid so:
               if (y > 0) {
-                  nodes[x][y]->neighbors_.push_back(nodes[x][y-1]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(y-1) * num_of_cols + x]);
               }
               if (y < num_of_rows - 1) {
-                  nodes[x][y]->neighbors_.push_back(nodes[x][y+1]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(y+1) * num_of_cols + x]);
               }
               if (x > 0) {
-                  nodes[x][y]->neighbors_.push_back(nodes[x+1][y]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[y * num_of_cols + (x-1)]);
               }
               if (x < num_of_cols - 1) {
-                  nodes[x][y]->neighbors_.push_back(nodes[x+1][y]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + y * num_of_cols]);
               }
               
               if (diagonals_) {
                   if (y > 0 && x > 0) {
-                      nodes[x][y]->neighbors_.push_back(nodes[x-1][y-1]);
+                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x-1) + (num_of_cols * (y-1))]);
                   }
                   if (y < num_of_rows - 1 && x > 0) {
-                      nodes[x][y]->neighbors_.push_back(nodes[x-1][y+1]);
+                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x-1) + (num_of_cols * (y+1))]);
                   }
                   if (y > 0 && x < num_of_cols - 1) {
-                      nodes[x][y]->neighbors_.push_back(nodes[x+1][y-1]);
+                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + (num_of_cols * (y-1))]);
                   }
                   if (y < num_of_rows - 1 && y < num_of_cols - 1) {
-                      nodes[x][y]->neighbors_.push_back(nodes[x+1][y+1]);
+                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + (num_of_cols * (y+1))]);
                   }  
               }
           }
@@ -78,7 +78,7 @@ namespace pathfinder {
      //start_node_ = nodes[num_of_cols/5][num_of_rows/2]; //[2][5]
       //end_node_ = nodes[4 * num_of_rows / 5][num_of_rows/2]; //[8][5]
   }
-
+//TODO: check if startNode/endnode is created
   void Pathfinder::setObstacle(size_t x, size_t y, bool isBlocked) {
       if (!(x >= 0  && x < num_of_rows)) {
           std::cout<<x<<std::endl;
@@ -87,19 +87,26 @@ namespace pathfinder {
       if (!(y >= 0 && y < num_of_rows)) {
           throw std::invalid_argument("Invalid y value");
       }
-      nodes[x][y]->is_obstacle_ = isBlocked;
+      if (start_node_->x_ == x && start_node_->y_== y) {
+          start_node_ = nullptr;
+      }
+      if (end_node_->x_ == x && end_node_->y_== y) {
+          end_node_ = nullptr;
+      }
+      array_of_nodes_[y * num_of_cols + x].is_obstacle_ = isBlocked;
   }
 
   void Pathfinder::SolveAStar() {
       //Set values to default
-      for(const vector<Node*>& vecs : nodes) {
-          for(Node* node : vecs) {
-              node->is_visited_ = false;
-              node->global_goal_ = INFINITY; //Biggest possible value, and the best value is the least
-              node->local_goal_ = INFINITY;
-              node->parent = nullptr;
+      for (size_t x = 0; x < num_of_cols; x++) {
+          for (size_t y = 0; y < num_of_rows; y++) {
+              array_of_nodes_[y * num_of_cols + x].is_visited_ = false;
+              array_of_nodes_[y * num_of_cols + x].global_goal_ = INFINITY; //Biggest possible value, and the best value is the least
+              array_of_nodes_[y * num_of_cols + x].local_goal_ = INFINITY;
+              array_of_nodes_[y * num_of_cols + x].parent = nullptr;
           }
       }
+      
       
       Node* currentNode = start_node_;
       start_node_->local_goal_ = 0; //Set to zero because the local goal is calculated by distance from parent, start has no parent
@@ -110,7 +117,7 @@ namespace pathfinder {
       nodes_to_test.push_back(start_node_);
       
       //Now we can check nodes in the list
-      while (!nodes_to_test.empty() && currentNode != end_node_) {
+      while (!nodes_to_test.empty() && currentNode != end_node_) { 
           //We want to check the nodes that have the smallest global goal because those are the nodes closest to the end node so we can sort it
           nodes_to_test.sort( [](const Node* a, const Node*b) { return a->global_goal_ < b->global_goal_;});
           
@@ -196,11 +203,15 @@ namespace pathfinder {
   }
 
   void Pathfinder::setStartNode(size_t x, size_t y) {
-      start_node_ = nodes[y][x];
+      start_node_ = &array_of_nodes_[x * num_of_cols + y];
   }
 
   void Pathfinder::setEndNode(size_t x, size_t y) {
-      end_node_ = nodes[y][x];
+      end_node_ = &array_of_nodes_[x * num_of_cols + y];
+  }
+
+  Pathfinder::Node *Pathfinder::getArrayOfNodes() const {
+      return array_of_nodes_;
   }
 
 

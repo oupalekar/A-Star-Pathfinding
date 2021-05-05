@@ -12,29 +12,32 @@ namespace visualizer {
 
   AStarApp::AStarApp() {
       ci::app::setWindowSize(kWindowSize, kWindowSize);
-      app = Pathfinder(20, 20);
-      app.setDiagonals(true);
+      app = Pathfinder(num_of_nodes_side, num_of_nodes_side);
+      //app.setDiagonals(true);
       app.CreateNodes();
-      value_of_nodes_ = vector<vector<size_t>>(app.getNumOfCols(), vector<size_t>(app.getNumOfRows(), 0));
-      pixel_side_length = (kWindowSize - (2 * kMargin)) / app.getNumOfCols();
+      value_of_nodes_ = vector<vector<size_t>>(num_of_nodes_side, vector<size_t>(num_of_nodes_side, 0));
   }
 
   void AStarApp::draw() {
+      DrawConnections();
       for (size_t row = 0; row < app.getNumOfRows(); ++row) {
           for (size_t col = 0; col < app.getNumOfCols(); ++col) {
-              if (value_of_nodes_[row][col] == 1) { //Checks if the shade of the pixel is not 0
-                  ci::gl::color(ci::Color::gray(0.3F));
-              } else if (value_of_nodes_[row][col] == 2) {
+              if(&app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getStartNode()) {
                   ci::gl::color(ci::Color("green"));
-              } else if (value_of_nodes_[row][col] == 3) {
+              } else if (&app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getEndNode()) {
                   ci::gl::color(ci::Color("red"));
-              } else if (value_of_nodes_[row][col] == 4) {
-                  ci::gl::color(ci::Color("yellow"));
+              } else if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_obstacle_) {
+                  ci::gl::color(ci::Color::gray(0.3F));
+              } else if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_visited_) {
+                  ci::gl::color(ci::Color8u(173, 216, 230));
               } else {
-                  ci::gl::color(ci::Color("white"));
+                  ci::gl::color(ci::Color("blue"));
               }
+              
               vec2 pixel_top_left = top_left + vec2(col * pixel_side_length,
-                                                    row * pixel_side_length);
+                                                    row * pixel_side_length) 
+                                                            + (vec2(kMargin, 0) * vec2(col, 0)) 
+                                                            + (vec2( 0, kMargin) * vec2(0, row));
 
               vec2 pixel_bottom_right =
                       pixel_top_left + vec2(pixel_side_length, pixel_side_length);
@@ -42,31 +45,20 @@ namespace visualizer {
 
               ci::gl::drawSolidRect(pixel_bounding_box);
 
-              ci::gl::color(ci::Color("blue"));
+              ci::gl::color(ci::Color("black"));
               ci::gl::drawStrokedRect(pixel_bounding_box);
           }
       }
-      if (app.getStartNode() != nullptr && app.getEndNode() != nullptr) {
-          app.SolveAStar();
-          RemovePath();
-          Pathfinder::Node *temp = app.getEndNode();
-          temp = temp->parent;
-          while (temp->parent != nullptr) {
-              value_of_nodes_[temp->y_][temp->x_] = 4;
-              temp = temp->parent;
-          }
-      }
+      CreatePath();
   }
 
   void AStarApp::mouseDown(ci::app::MouseEvent event) {
       if (event.isControlDown()) {
           setStartNode(event.getPos());
-          //CreatePath();
-      } else if (event.isShiftDown()) {
+      } else if (event.isShiftDown() && app.getStartNode() != nullptr) {
           setEndNode(event.getPos());
-          //CreatePath();
       } else {
-          if(event.isRight()) {
+          if (event.isRight()) {
               updateBoard(event.getPos(), 0);
           }
           updateBoard(event.getPos(), 1);
@@ -74,7 +66,7 @@ namespace visualizer {
   }
 
   void AStarApp::mouseDrag(ci::app::MouseEvent event) {
-      if(event.isRight()) {
+      if (event.isRight()) {
           updateBoard(event.getPos(), 0);
       } else {
           updateBoard(event.getPos(), 1);
@@ -82,35 +74,33 @@ namespace visualizer {
   }
 
   void AStarApp::updateBoard(const vec2 &coord, size_t value) {
-      double radius = brush_radius;
-      vec2 brush_sketchpad_coords =
-              (coord - top_left) / (float) pixel_side_length;
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
           for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              vec2 pixel_center = {col + 0.5, row + 0.5};
-              if (glm::distance(brush_sketchpad_coords, pixel_center) <=
+              vec2 top_length_node = top_left + vec2(col * pixel_side_length,row * pixel_side_length)
+                                                + (vec2(kMargin, 0) * vec2(col, 0))
+                                                + (vec2( 0, kMargin) * vec2(0, row));
+              vec2 pixel_center = top_length_node + vec2(pixel_side_length/2, pixel_side_length/2);
+              if (glm::distance(coord, pixel_center) <=
                   radius) {
-                  value_of_nodes_[row][col] = value; //If the distance between the pixels and the
-                  // brush is <= the radius then sets that pixel to a shade of 1
-                  app.setObstacle(col, row, true);
+                  if (value == 1) {
+                      app.setObstacle(col, row, true);
+                  } else {
+                      app.setObstacle(col, row, false);
+                  }
               }
           }
       }
   }
 
   void AStarApp::setStartNode(const vec2 &coord) {
-      vec2 brush_sketchpad_coords =
-              (coord - top_left) / (float) pixel_side_length;
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
           for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              vec2 pixel_center = {col + 0.5, row + 0.5};
-              if (value_of_nodes_[row][col] == 2) {
-                  value_of_nodes_[row][col] = 0;
-              }
-              if (glm::distance(brush_sketchpad_coords, pixel_center) <=
-                  brush_radius) {
-                  value_of_nodes_[row][col] = 2; //If the distance between the pixels and the
-                  // brush is <= the radius then sets that pixel to a shade of 1
+              vec2 top_length_node = top_left + vec2(col * pixel_side_length,row * pixel_side_length)
+                                     + (vec2(kMargin, 0) * vec2(col, 0))
+                                     + (vec2( 0, kMargin) * vec2(0, row));
+              vec2 pixel_center = top_length_node + vec2(pixel_side_length/2, pixel_side_length/2);
+              if (glm::distance(coord, pixel_center) <=
+                  radius) {
                   app.setStartNode(row, col);
                   break;
               }
@@ -119,18 +109,14 @@ namespace visualizer {
   }
 
   void AStarApp::setEndNode(const vec2 &coord) {
-      vec2 brush_sketchpad_coords =
-              (coord - top_left) / (float) pixel_side_length;
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
           for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              vec2 pixel_center = {col + 0.5, row + 0.5};
-              if (value_of_nodes_[row][col] == 3) {
-                  value_of_nodes_[row][col] = 0;
-              }
-              if (glm::distance(brush_sketchpad_coords, pixel_center) <=
-                  brush_radius) {
-                  value_of_nodes_[row][col] = 3; //If the distance between the pixels and the
-                  // brush is <= the radius then sets that pixel to a shade of 1
+              vec2 top_length_node = top_left + vec2(col * pixel_side_length,row * pixel_side_length)
+                                     + (vec2(kMargin, 0) * vec2(col, 0))
+                                     + (vec2( 0, kMargin) * vec2(0, row));
+              vec2 pixel_center = top_length_node + vec2(pixel_side_length/2, pixel_side_length/2);
+              if (glm::distance(coord, pixel_center) <=
+                  radius) {
                   app.setEndNode(row, col);
                   break;
               }
@@ -139,24 +125,78 @@ namespace visualizer {
   }
 
   void AStarApp::CreatePath() {
+      RemovePath();
       if (app.getStartNode() != nullptr && app.getEndNode() != nullptr) {
-          RemovePath();
           app.SolveAStar();
           Pathfinder::Node *temp = app.getEndNode();
           temp = temp->parent;
           while (temp->parent != nullptr) {
-              value_of_nodes_[temp->y_][temp->x_] = 4;
+
+              vec2 pixel_top_left = top_left + vec2(temp->x_ * pixel_side_length,
+                                                    temp->y_ * pixel_side_length)
+                                    + (vec2(kMargin, 0) * vec2(temp->x_, 0))
+                                    + (vec2( 0, kMargin) * vec2(0, temp->y_));
+              vec2 pixel_center = pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
+              vec2 parent_pixel_top_left = top_left + vec2(temp->parent->x_ * pixel_side_length,
+                                                    temp->parent->y_ * pixel_side_length)
+                                    + (vec2(kMargin, 0) * vec2(temp->parent->x_, 0))
+                                    + (vec2( 0, kMargin) * vec2(0, temp->parent->y_));
+              vec2 parent_pixel_center = parent_pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
+              ci::gl::lineWidth(50);
+              ci::gl::color(ci::Color("yellow"));
+              ci::gl::drawLine(pixel_center, parent_pixel_center);
               temp = temp->parent;
           }
+          CheckVisited();
       }
-      
   }
 
   void AStarApp::RemovePath() {
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
           for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              if (value_of_nodes_[row][col] == 4) {
+              if (value_of_nodes_[row][col] == 4 || value_of_nodes_[row][col] == 5) {
                   value_of_nodes_[row][col] = 0;
+              }
+          }
+      }
+  }
+
+  void AStarApp::CheckVisited() {
+      for (size_t row = 0; row < app.getNumOfRows(); row++) {
+          for (size_t col = 0; col < app.getNumOfCols(); col++) {
+              if (app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getStartNode() ||
+                  app.getArrayOfNodes()[row * app.getNumOfCols() + col] == app.getEndNode()) {
+                  continue;
+              }
+              if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_visited_) {
+                  if (value_of_nodes_[row][col] == 4) {
+                      continue;
+                  } else {
+                      value_of_nodes_[row][col] = 5;
+                  }
+              }
+          }
+      }
+  }
+
+  void AStarApp::DrawConnections() {
+      for (size_t row = 0; row < app.getNumOfRows(); row++) {
+          for (size_t col = 0; col < app.getNumOfCols(); col++) {
+              for (Pathfinder::Node *n : app.getArrayOfNodes()[row * app.getNumOfCols() + col].neighbors_) {
+                  Pathfinder::Node* main = &app.getArrayOfNodes()[row * app.getNumOfCols() + col];
+                  vec2 pixel_top_left = top_left + vec2(main->x_ * pixel_side_length,
+                                                        main->y_ * pixel_side_length)
+                                        + (vec2(kMargin, 0) * vec2(main->x_, 0))
+                                        + (vec2( 0, kMargin) * vec2(0, main->y_));
+                  vec2 pixel_center = pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
+                  vec2 parent_pixel_top_left = top_left + vec2(n->x_ * pixel_side_length,
+                                                               n->y_ * pixel_side_length)
+                                               + (vec2(kMargin, 0) * vec2(n->x_, 0))
+                                               + (vec2( 0, kMargin) * vec2(0, n->y_));
+                  vec2 parent_pixel_center = parent_pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
+                  ci::gl::lineWidth(1000);
+                  ci::gl::color(ci::Color("blue"));
+                  ci::gl::drawLine(pixel_center, parent_pixel_center);
               }
           }
       }
@@ -164,3 +204,34 @@ namespace visualizer {
 
 
 } //namespace visualizer;
+
+
+/*if (value_of_nodes_[row][col] == 1) { //Checks if the shade of the pixel is not 0
+                  ci::gl::color(ci::Color::gray(0.3F));
+              } else if (value_of_nodes_[row][col] == 2) {
+                  ci::gl::color(ci::Color("green"));
+              } else if (value_of_nodes_[row][col] == 3) {
+                  ci::gl::color(ci::Color("red"));
+              } else if (value_of_nodes_[row][col] == 4) {
+                  ci::gl::color(ci::Color("yellow"));
+              } else if (value_of_nodes_[row][col] == 5) {
+                      ci::gl::color(ci::Color("blue"));
+              } else {
+                  ci::gl::color(ci::Color("white"));
+              }*/
+/*
+ * switch (value_of_nodes_[row][col]) {
+    case 1:
+        ci::gl::color(ci::Color::gray(0.3F));
+    case 2: 
+        ci::gl::color(ci::Color("green"));
+    case 3:
+        ci::gl::color(ci::Color("red"));
+    case 4: 
+        ci::gl::color(ci::Color("yellow"));
+    case 0:
+        ci::gl::color(ci::Color("white"));
+}
+ */
+
+
