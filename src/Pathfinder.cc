@@ -45,32 +45,39 @@ namespace pathfinder {
           for (size_t y = 0; y < num_of_rows; y++) {
               //We don't want the edges to have connections outside the grid so:
               if (y > 0) {
-                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(y-1) * num_of_cols + x]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(
+                          &array_of_nodes_[(y - 1) * num_of_cols + x]);
               }
               if (y < num_of_rows - 1) {
-                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(y+1) * num_of_cols + x]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(
+                          &array_of_nodes_[(y + 1) * num_of_cols + x]);
               }
               if (x > 0) {
-                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[y * num_of_cols + (x-1)]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(
+                          &array_of_nodes_[y * num_of_cols + (x - 1)]);
               }
               if (x < num_of_cols - 1) {
-                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + y * num_of_cols]);
+                  array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(
+                          &array_of_nodes_[(x + 1) + y * num_of_cols]);
               }
-              
-              if (diagonals_) {
-                  if (y > 0 && x > 0) {
-                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x-1) + (num_of_cols * (y-1))]);
-                  }
-                  if (y < num_of_rows - 1 && x > 0) {
-                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x-1) + (num_of_cols * (y+1))]);
-                  }
-                  if (y > 0 && x < num_of_cols - 1) {
-                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + (num_of_cols * (y-1))]);
-                  }
-                  if (y < num_of_rows - 1 && y < num_of_cols - 1) {
-                      array_of_nodes_[y * num_of_cols + x].neighbors_.push_back(&array_of_nodes_[(x+1) + (num_of_cols * (y+1))]);
-                  }  
+              if (y > 0 && x > 0) {
+                  array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.push_back(
+                          &array_of_nodes_[(y - 1) * num_of_cols + (x - 1)]);
               }
+              if (y < num_of_cols - 1 && x > 0) {
+                  array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.push_back(
+                          &array_of_nodes_[(y + 1) * num_of_cols + (x - 1)]);
+              }
+              if (y > 0 && x < num_of_cols - 1) {
+                  array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.push_back(
+                          &array_of_nodes_[(y - 1) * num_of_cols + (x + 1)]);
+              }
+              if (y < num_of_cols - 1 && x < num_of_cols - 1) {
+              array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.push_back(
+                      &array_of_nodes_[(y + 1) * num_of_cols + (x + 1)]);
+              }
+              array_of_nodes_[y * num_of_cols + x].combo_neighbors = array_of_nodes_[y * num_of_cols + x].neighbors_;
+              array_of_nodes_[y * num_of_cols + x].combo_neighbors.insert(array_of_nodes_[y * num_of_cols + x].combo_neighbors.end(), array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.begin(),array_of_nodes_[y * num_of_cols + x].diagonal_neighbors.end());
           }
       }
       
@@ -87,11 +94,15 @@ namespace pathfinder {
       if (!(y >= 0 && y < num_of_rows)) {
           throw std::invalid_argument("Invalid y value");
       }
-      if (start_node_->x_ == x && start_node_->y_== y) {
-          start_node_ = nullptr;
+      if (start_node_ != nullptr) {
+          if (start_node_->x_ == x && start_node_->y_ == y) {
+              start_node_ = nullptr;
+          }
       }
-      if (end_node_->x_ == x && end_node_->y_== y) {
-          end_node_ = nullptr;
+      if (end_node_ != nullptr) {
+          if (end_node_->x_ == x && end_node_->y_ == y) {
+              end_node_ = nullptr;
+          }
       }
       array_of_nodes_[y * num_of_cols + x].is_obstacle_ = isBlocked;
   }
@@ -132,8 +143,11 @@ namespace pathfinder {
           
           currentNode = nodes_to_test.front();
           currentNode->is_visited_ = true; // We've visited the first node!
-          
-          for(Node* neighborNode : currentNode->neighbors_) {
+          vector<Node*> valid_neighbors = currentNode->neighbors_;
+          if (diagonals_) {
+              valid_neighbors.insert(valid_neighbors.end(), currentNode->diagonal_neighbors.begin(), currentNode->diagonal_neighbors.end());
+          }
+          for(Node* neighborNode : valid_neighbors) {
               if(!neighborNode->is_obstacle_ && !neighborNode->is_visited_) {
                   nodes_to_test.push_back(neighborNode);
               }
@@ -198,8 +212,8 @@ namespace pathfinder {
       return end_node_;
   }
 
-  void Pathfinder::setDiagonals(bool diagonals) {
-      diagonals_ = diagonals;
+  void Pathfinder::setDiagonals() {
+      diagonals_ = !diagonals_;
   }
 
   void Pathfinder::setStartNode(size_t x, size_t y) {
@@ -219,6 +233,10 @@ namespace pathfinder {
 
   Pathfinder::Node *Pathfinder::getArrayOfNodes() const {
       return array_of_nodes_;
+  }
+
+  bool Pathfinder::getDiagonals() {
+      return diagonals_;
   }
 
 

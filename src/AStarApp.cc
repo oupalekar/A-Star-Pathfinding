@@ -13,12 +13,12 @@ namespace visualizer {
   AStarApp::AStarApp() {
       ci::app::setWindowSize(1.5 * kWindowSize, kWindowSize);
       app = Pathfinder(num_of_nodes_side, num_of_nodes_side);
-      //app.setDiagonals(true);
       app.CreateNodes();
       value_of_nodes_ = vector<vector<size_t>>(num_of_nodes_side, vector<size_t>(num_of_nodes_side, 0));
   }
 
-  void AStarApp::draw() {
+  void AStarApp::update() {
+      ci::gl::clear();
       DrawConnections();
       for (size_t row = 0; row < app.getNumOfRows(); ++row) {
           for (size_t col = 0; col < app.getNumOfCols(); ++col) {
@@ -29,15 +29,15 @@ namespace visualizer {
               } else if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_obstacle_) {
                   ci::gl::color(ci::Color::gray(0.3F));
               } else if (app.getArrayOfNodes()[row * app.getNumOfCols() + col].is_visited_) {
-                  ci::gl::color(ci::Color8u(173, 216, 230));
+                  ci::gl::color(ci::Color8u(0, 0, 139));
               } else {
                   ci::gl::color(ci::Color("blue"));
               }
-              
+
               vec2 pixel_top_left = top_left + vec2(col * pixel_side_length,
-                                                    row * pixel_side_length) 
-                                                            + (vec2(kMargin, 0) * vec2(col, 0)) 
-                                                            + (vec2( 0, kMargin) * vec2(0, row));
+                                                    row * pixel_side_length)
+                                    + (vec2(kMargin, 0) * vec2(col, 0))
+                                    + (vec2( 0, kMargin) * vec2(0, row));
 
               vec2 pixel_bottom_right =
                       pixel_top_left + vec2(pixel_side_length, pixel_side_length);
@@ -50,6 +50,10 @@ namespace visualizer {
           }
       }
       CreatePath();
+  }
+  
+  void AStarApp::draw() {
+      DrawStrings();
   }
 
   void AStarApp::mouseDown(ci::app::MouseEvent event) {
@@ -96,6 +100,10 @@ namespace visualizer {
                   }
               }
           }
+      }
+      if (glm::distance(coord, double_button.getCenter()) <= 50) {
+          app.setDiagonals();
+          //app.CreateNodes();
       }
   }
 
@@ -148,7 +156,7 @@ namespace visualizer {
                                     + (vec2(kMargin, 0) * vec2(temp->parent->x_, 0))
                                     + (vec2( 0, kMargin) * vec2(0, temp->parent->y_));
               vec2 parent_pixel_center = parent_pixel_top_left + vec2(pixel_side_length/2, pixel_side_length/2);
-              ci::gl::color(ci::Color("red"));
+              ci::gl::color(ci::Color("white"));
               ci::gl::drawLine(pixel_center, parent_pixel_center);
               temp = temp->parent;
           }
@@ -158,7 +166,7 @@ namespace visualizer {
   void AStarApp::DrawConnections() {
       for (size_t row = 0; row < app.getNumOfRows(); row++) {
           for (size_t col = 0; col < app.getNumOfCols(); col++) {
-              for (Pathfinder::Node *n : app.getArrayOfNodes()[row * app.getNumOfCols() + col].neighbors_) {
+              for (Pathfinder::Node *n : app.getArrayOfNodes()[row * app.getNumOfCols() + col].combo_neighbors) {
                   Pathfinder::Node* main = &app.getArrayOfNodes()[row * app.getNumOfCols() + col];
                   vec2 pixel_top_left = top_left + vec2(main->x_ * pixel_side_length,
                                                         main->y_ * pixel_side_length)
@@ -177,6 +185,25 @@ namespace visualizer {
           }
       }
   }
+  
+  void AStarApp::DrawStrings() {
+      ci::gl::color(ci::Color("red"));
+      ci::gl::drawSolidRoundedRect(double_button, 10, 0);
+      std::string diagonal_state;
+      if (app.getDiagonals()) {
+          diagonal_state = "Diagonals: True";
+      } else {
+          diagonal_state = "Diagonals: False";
+      }
+      ci::gl::drawString(diagonal_state, double_button.getCenter() + vec2(20, -5), ci::Color("white"), ci::Font("Palatino", 15.0f));
+      ci::gl::drawString("Press control + click to create start node.", double_button.getLowerLeft() + vec2(-10, 20), ci::Color("white"), ci::Font("Palatino", 15.0f));
+      ci::gl::drawString("Press shift + click to create end node.", double_button.getLowerLeft() + vec2(-10, 45), ci::Color("white"), ci::Font("Palatino", 15.0f));
+      ci::gl::drawString("You must create start node first.", double_button.getLowerLeft() + vec2(-10, 70), ci::Color("white"), ci::Font("Palatino", 15.0f));
+      ci::gl::drawString("Left click to create obstacles, right click to remove.", double_button.getLowerLeft() + vec2(-10, 95), ci::Color("white"), ci::Font("Palatino", 15.0f));
+      ci::gl::drawString(" You can also drag with your mouse.", double_button.getLowerLeft() + vec2(-10, 120), ci::Color("white"), ci::Font("Palatino", 15.0f));
+  }
+
+ 
 
 
 } //namespace visualizer;

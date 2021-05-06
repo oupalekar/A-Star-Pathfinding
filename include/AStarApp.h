@@ -22,11 +22,11 @@ namespace visualizer {
       void draw() override;
       void mouseDown(ci::app::MouseEvent event) override;
       void mouseDrag(ci::app::MouseEvent event) override;
+      void update() override;
       void updateBoard(const vec2& coord, size_t value);
       void setStartNode(const vec2& coord);
       void setEndNode(const vec2& coord);
       void CreatePath();
-      void RemovePath();
       void DrawConnections();
       
       const int kWindowSize = 800;
@@ -35,12 +35,15 @@ namespace visualizer {
       vec2 top_left = vec2(kMargin,kMargin);
       const double pixel_side_length = (kWindowSize - ((num_of_nodes_side + 1) * kMargin)) / num_of_nodes_side;
       double radius = pixel_side_length / 2;
-
+      ci::Rectf double_button = ci::Rectf(vec2(820, 20), vec2(850, 50));
+      
     private:
       Pathfinder app = Pathfinder(0, 0);
       vector<vector<size_t>> value_of_nodes_;
 
       void CheckVisited();
+
+      void DrawStrings();
   };
 }
 

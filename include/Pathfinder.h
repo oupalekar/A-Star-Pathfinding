@@ -19,6 +19,8 @@ namespace pathfinder {
           float global_goal_; //Distance to goal
           float local_goal_;  
           vector<Node*> neighbors_; //All nodes that can be traversed to from this node
+          vector<Node*> diagonal_neighbors;
+          vector<Node*> combo_neighbors;
           Node* parent; //Parent node
           
           bool operator==(const Node* node) const {
@@ -58,11 +60,13 @@ namespace pathfinder {
 
       Node *getArrayOfNodes() const;
 
-      void setDiagonals(bool diagonals);
+      void setDiagonals();
 
       void setStartNode(size_t x, size_t y);
 
       void setEndNode(size_t x, size_t y);
+      
+      bool getDiagonals();
 
     private:
       size_t num_of_rows;
