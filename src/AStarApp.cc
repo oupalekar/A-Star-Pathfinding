@@ -145,7 +145,6 @@ namespace visualizer {
           Pathfinder::Node *temp = app.getEndNode();
           //temp = temp->parent;
           while (temp->parent != nullptr) {
-
               vec2 pixel_top_left = top_left + vec2(temp->x_ * pixel_side_length,
                                                     temp->y_ * pixel_side_length)
                                     + (vec2(kMargin, 0) * vec2(temp->x_, 0))
