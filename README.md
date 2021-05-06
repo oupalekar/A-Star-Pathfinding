@@ -4,7 +4,7 @@ Using a 16 x 16 grid, you can visualize how the A* algorithm does its pathfindin
 The pathfinding algorithm supports both cardinal directions as well as diagonal ones.
 
 Here's an example of the visual:
-![image](/Users/ojasupalekar/Documents/image2.png)
+![image](image2.png)
 
 How to use:
 * ctrl + left-click to create the start node - shown as the green square
