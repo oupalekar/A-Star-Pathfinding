@@ -3,7 +3,7 @@ This is an A* Pathfinding visualizer made in C++ using the Cinder Library.
 Using a 16 x 16 grid, you can visualize how the A* algorithm does its pathfinding across the entire map.
 The pathfinding algorithm supports both cardinal directions as well as diagonal ones.
 
-Here's an example of the visual: 
+Here's an example of the visual:
 ![image](image2.png)
 
 How to use:
